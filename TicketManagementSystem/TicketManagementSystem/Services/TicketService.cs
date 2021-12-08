@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Configuration;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using EmailService;
 
@@ -10,43 +11,33 @@ namespace TicketManagementSystem
     {
         public int CreateTicket(string title, Priority priority, string assignedTo, string description, DateTime created, bool isPayingCustomer)
         {
-            // Check if t or desc are null or if they are invalid and throw exception
+            // Check if title or description are null or if they are invalid and throw exception
             if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(description))
             {
-                throw new InvalidTicketException("Title or description were null");
+                throw new InvalidTicketException("Title or description were null or invalid");
             }
 
             User user = GetUser(assignedTo);
 
             if (user == null)
             {
-                throw new UnknownUserException("User " + assignedTo + " not found");
+                throw new UnknownUserException("Assigned user " + assignedTo + " not found");
             }
 
-            var priorityRaised = false;
-            if (created < DateTime.UtcNow - TimeSpan.FromHours(1))
+            // We can only elevate priority if it's low or medium
+            if (priority != Priority.High)
             {
-                if (priority == Priority.Low)
+                var priorityRaised = false;
+                if (created < DateTime.UtcNow - TimeSpan.FromHours(1))
                 {
-                    priority = Priority.Medium;
+                    priority = ElevatePriority(priority);
                     priorityRaised = true;
                 }
-                else if (priority == Priority.Medium)
-                {
-                    priority = Priority.High;
-                    priorityRaised = true;
-                }
-            }
 
-            if ((title.Contains("Crash") || title.Contains("Important") || title.Contains("Failure")) && !priorityRaised)
-            {
-                if (priority == Priority.Low)
+                var importantTitles = new[] { "Crash", "Important", "Failure" };
+                if ((importantTitles.Any(title.Contains) && !priorityRaised))
                 {
-                    priority = Priority.Medium;
-                }
-                else if (priority == Priority.Medium)
-                {
-                    priority = Priority.High;
+                    priority = ElevatePriority(priority);
                 }
             }
 
@@ -122,6 +113,20 @@ namespace TicketManagementSystem
             }
 
             return user;
+        }
+
+        private Priority ElevatePriority(Priority priority)
+        {
+            if (priority == Priority.Low)
+            {
+                priority = Priority.Medium;
+            }
+            else if (priority == Priority.Medium)
+            {
+                priority = Priority.High;
+            }
+
+            return priority;
         }
     }
 
