@@ -110,12 +110,6 @@ namespace TicketManagementSystem
             TicketRepository.UpdateTicket(ticket);
         }
 
-        private void WriteTicketToFile(Ticket ticket)
-        {
-            var ticketJson = JsonSerializer.Serialize(ticket);
-            File.WriteAllText(Path.Combine(Path.GetTempPath(), $"ticket_{ticket.Id}.json"), ticketJson);
-        }
-
         private User GetUser(string username)
         {
             User user = null;
