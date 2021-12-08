@@ -16,14 +16,7 @@ namespace TicketManagementSystem
                 throw new InvalidTicketException("Title or description were null");
             }
 
-            User user = null;
-            using (var ur = new UserRepository())
-            {
-                if (assignedTo != null)
-                {
-                    user = ur.GetUser(assignedTo);
-                }
-            }
+            User user = GetUser(assignedTo);
 
             if (user == null)
             {
@@ -98,14 +91,7 @@ namespace TicketManagementSystem
 
         public void AssignTicket(int id, string username)
         {
-            User user = null;
-            using (var ur = new UserRepository())
-            {
-                if (username != null)
-                {
-                    user = ur.GetUser(username);
-                }
-            }
+            User user = GetUser(username);
 
             if (user == null)
             {
@@ -128,6 +114,20 @@ namespace TicketManagementSystem
         {
             var ticketJson = JsonSerializer.Serialize(ticket);
             File.WriteAllText(Path.Combine(Path.GetTempPath(), $"ticket_{ticket.Id}.json"), ticketJson);
+        }
+
+        private User GetUser(string username)
+        {
+            User user = null;
+            using (var ur = new UserRepository())
+            {
+                if (username != null)
+                {
+                    user = ur.GetUser(username);
+                }
+            }
+
+            return user;
         }
     }
 
